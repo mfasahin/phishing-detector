@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ Phishing Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header .shield {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .examples {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .example-btn {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.safe {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .result.danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-icon {
+            font-size: 3em;
+        }
+
+        .result-title {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .confidence-bar {
+            background: rgba(255,255,255,0.3);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: width 1s ease-out;
+        }
+
+        .details {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .warnings {
+            margin-top: 20px;
+        }
+
+        .warning-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ml-prediction {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .ml-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .probability-bars {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .prob-item {
+            flex: 1;
+        }
+
+        .prob-label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .prob-bar {
+            background: rgba(255,255,255,0.3);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            transition: width 1s ease-out;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="shield">🛡️</div>
+            <h1>Phishing Detector</h1>
+            <p>Advanced ML-powered URL security scanner</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="urlInput" 
+                    placeholder="Enter URL to scan (e.g., https://example.com)"
+                    autocomplete="off"
+                >
+                <button id="scanBtn" onclick="scanURL()">🔍 Scan</button>
+            </div>
+            
+            <div class="examples">
+                <span style="color: #666; margin-right: 10px;">Try examples:</span>
+                <button class="example-btn" onclick="setExample('https://paypa1.com/login')">Suspicious URL</button>
+                <button class="example-btn" onclick="setExample('http://192.168.1.1/secure-login')">IP Address</button>
+                <button class="example-btn" onclick="setExample('https://www.google.com')">Legitimate Site</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing URL with ML model...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <div class="result-header">
+                <div class="result-icon" id="resultIcon"></div>
+                <div>
+                    <div class="result-title" id="resultTitle"></div>
+                    <div id="resultSubtitle"></div>
+                </div>
+            </div>
+
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceFill" style="width: 0%">
+                    <span id="confidenceText">0%</span>
+                </div>
+            </div>
+
+            <div class="ml-prediction" id="mlPrediction">
+                <div class="ml-title">🤖 Machine Learning Analysis</div>
+                <div id="mlStatus"></div>
+                <div class="probability-bars" id="probabilityBars" style="display: none;">
+                    <div class="prob-item">
+                        <div class="prob-label">Legitimate</div>
+                        <div class="prob-bar">
+                            <div class="prob-fill" id="probLegit" style="width: 0%">
+                                <span id="probLegitText"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="prob-item">
+                        <div class="prob-label">Phishing</div>
+                        <div class="prob-bar">
+                            <div class="prob-fill" id="probPhish" style="width: 0%">
+                                <span id="probPhishText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warnings" id="warnings"></div>
+
+            <div class="details">
+                <h3 style="margin-bottom: 15px;">📋 Technical Details</h3>
+                <div class="detail-item">
+                    <span>URL Length:</span>
+                    <span id="urlLength">-</span>
+                </div>
+                <div class="detail-item">
+                    <span>HTTPS:</span>
+                    <span id="hasHttps">-</span>
+                </div>
+                <div class="detail-item">
+                    <span>IP Address:</span>
+                    <span id="hasIp">-</span>
+                </div>
+                <div class="detail-item">
+                    <span>Suspicious Characters:</span>
+                    <span id="suspiciousChars">-</span>
+                </div>
+                <div class="detail-item">
+                    <span>Google Safe Browsing:</span>
+                    <span id="safeBrowsing">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by Machine Learning • Random Forest Classifier • 94% Accuracy</p>
+        </div>
+    </div>
+
+    <script>
+        // Enter tuşu ile tarama
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                scanURL();
+            }
+        });
+
+        function setExample(url) {
+            document.getElementById('urlInput').value = url;
+        }
+
+        async function scanURL() {
+            const urlInput = document.getElementById('urlInput').value.trim();
+            
+            if (!urlInput) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            // URL formatını kontrol et
+            if (!urlInput.startsWith('http://') && !urlInput.startsWith('https://')) {
+                showError('URL must start with http:// or https://');
+                return;
+            }
+
+            // UI'ı güncelle
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('error').classList.remove('active');
+            document.getElementById('scanBtn').disabled = true;
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const data = await response.json();
+                displayResult(data);
+
+            } catch (error) {
+                showError('Failed to connect to API. Make sure the server is running on port 5000.');
+                console.error('Error:', error);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('scanBtn').disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            const result = document.getElementById('result');
+            const isPhishing = data.is_phishing;
+            
+            // Sonuç tipine göre stil
+            result.classList.remove('safe', 'danger');
+            result.classList.add(isPhishing ? 'danger' : 'safe');
+            result.classList.add('active');
+
+            // İkon ve başlık
+            document.getElementById('resultIcon').textContent = isPhishing ? '🚨' : '✅';
+            document.getElementById('resultTitle').textContent = isPhishing ? 'Phishing Detected!' : 'URL is Safe';
+            document.getElementById('resultSubtitle').textContent = isPhishing ? 
+                'This URL appears to be a phishing attempt' : 
+                'No threats detected';
+
+            // Confidence bar
+            const confidence = data.confidence || 0;
+            setTimeout(() => {
+                document.getElementById('confidenceFill').style.width = confidence + '%';
+                document.getElementById('confidenceText').textContent = confidence.toFixed(1) + '%';
+            }, 100);
+
+            // ML Prediction
+            const mlPred = data.ml_prediction || {};
+            if (mlPred.available) {
+                document.getElementById('mlStatus').innerHTML = `
+                    <strong>Prediction:</strong> ${mlPred.prediction} 
+                    <br><strong>Confidence:</strong> ${mlPred.confidence}%
+                `;
+                
+                document.getElementById('probabilityBars').style.display = 'flex';
+                setTimeout(() => {
+                    const legitProb = mlPred.probability_legitimate || 0;
+                    const phishProb = mlPred.probability_phishing || 0;
+                    
+                    document.getElementById('probLegit').style.width = legitProb + '%';
+                    document.getElementById('probLegitText').textContent = legitProb.toFixed(1) + '%';
+                    document.getElementById('probPhish').style.width = phishProb + '%';
+                    document.getElementById('probPhishText').textContent = phishProb.toFixed(1) + '%';
+                }, 100);
+            } else {
+                document.getElementById('mlStatus').textContent = 'ML model not available';
+                document.getElementById('probabilityBars').style.display = 'none';
+            }
+
+            // Warnings
+            const warnings = data.warnings || [];
+            const warningsDiv = document.getElementById('warnings');
+            if (warnings.length > 0) {
+                warningsDiv.innerHTML = '<h3 style="margin-bottom: 15px;">⚠️ Warnings</h3>';
+                warnings.forEach(warning => {
+                    const item = document.createElement('div');
+                    item.className = 'warning-item';
+                    item.textContent = warning;
+                    warningsDiv.appendChild(item);
+                });
+            } else {
+                warningsDiv.innerHTML = '';
+            }
+
+            // Technical details
+            const features = data.features || {};
+            document.getElementById('urlLength').textContent = features.url_length || '-';
+            document.getElementById('hasHttps').textContent = features.has_https ? '✅ Yes' : '❌ No';
+            document.getElementById('hasIp').textContent = features.has_ip ? '⚠️ Yes' : '✅ No';
+            
+            const suspChars = [];
+            if (features.has_at_symbol) suspChars.push('@');
+            if (features.num_hyphens > 3) suspChars.push(`${features.num_hyphens} hyphens`);
+            document.getElementById('suspiciousChars').textContent = suspChars.length > 0 ? suspChars.join(', ') : '✅ None';
+
+            const safeBrowsing = data.safe_browsing || {};
+            if (safeBrowsing.checked) {
+                document.getElementById('safeBrowsing').textContent = safeBrowsing.is_threat ? 
+                    '🔴 Threat detected' : '✅ Clean';
+            } else {
+                document.getElementById('safeBrowsing').textContent = '⚠️ Not checked';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '❌ Error: ' + message;
+            errorDiv.classList.add('active');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
