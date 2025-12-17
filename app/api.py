@@ -1,6 +1,4 @@
-# app/api.py - SON HALİ
-
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from detector import analyze_url
 from dotenv import load_dotenv
@@ -10,6 +8,25 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# --- YENİ EKLENEN KISIM BAŞLANGIÇ ---
+# Bu kısım, biri siteye girdiğinde (root URL) index.html dosyasını gönderir.
+@app.route('/')
+def home():
+    # api.py dosyası 'app' klasöründe, index.html ise bir üst klasörde (ana dizinde).
+    # Bu yüzden bir üst dizine (..) çıkıp dosyayı oradan alıyoruz.
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(current_dir)
+    return send_from_directory(root_dir, 'index.html')
+
+# Eğer index.html içinde style.css veya script.js gibi dosyalar çağrılıyorsa
+# onlar için de genel bir statik dosya sunucusu ekleyelim:
+@app.route('/<path:filename>')
+def serve_static(filename):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(current_dir)
+    return send_from_directory(root_dir, filename)
+# --- YENİ EKLENEN KISIM BİTİŞ ---
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -25,11 +42,6 @@ def analyze():
     
     result = analyze_url(url)
     return jsonify(result)
-
-@app.route('/')
-def index():
-    # Bir üst dizindeki (ana klasördeki) index.html'i sun
-    return send_from_directory('..', 'index.html')
 
 
 if __name__ == '__main__':
